@@ -1,0 +1,32 @@
+---
+- name: Pull and run catalogue containers 
+  gather_facts: No
+  hosts: production
+
+  tasks:
+    - name: Create catalogue container
+      docker_container:
+        name: catalogue
+        image: gcr.io/project-for-terraform/catalogue
+        networks:
+          - name: microservices-net
+        recreate: yes
+        state: started  
+        restart_policy: always     
+
+- name: Pull and run catalogue-db containers 
+  gather_facts: No
+  hosts: mongo-db
+
+  tasks:
+    - name: Create catalogue-db container
+      docker_container:
+        name: catalogue-db
+        image: gcr.io/project-for-terraform/catalogue-db
+        networks:
+          - name: microservices-net
+        ports:
+          - "3306:3306"  
+        recreate: yes
+        state: started  
+        restart_policy: always     

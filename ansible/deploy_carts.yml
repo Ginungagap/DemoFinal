@@ -1,0 +1,32 @@
+---
+- name: Pull and run carts containers 
+  gather_facts: No
+  hosts: production
+
+  tasks:
+    - name: Create carts container
+      docker_container:
+        name: carts
+        image: gcr.io/project-for-terraform/carts
+        networks:
+          - name: microservices-net
+        recreate: yes
+        state: started  
+        restart_policy: always     
+
+- name: Pull and run carts-db containers 
+  gather_facts: No
+  hosts: mongo-db
+
+  tasks:
+    - name: Create carts-db container
+      docker_container:
+        name: carts-db
+        image: mongo
+        networks:
+          - name: microservices-net
+        ports:
+          - "27017:27017"  
+        recreate: yes
+        state: started  
+        restart_policy: always     

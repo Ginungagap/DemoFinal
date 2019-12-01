@@ -1,0 +1,17 @@
+---
+- name: Pull and run front-end container
+  gather_facts: No
+  hosts: production
+
+  tasks:
+  - name: Create front-end container
+    docker_container:
+      name: front-end
+      image: gcr.io/project-for-terraform/front-end
+      networks:
+        - name: microservices-net
+      ports:
+        - "80:8079"       
+      recreate: yes
+      state: started
+      restart_policy: always

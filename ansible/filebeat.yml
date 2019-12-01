@@ -1,0 +1,35 @@
+filebeat.config:
+  modules:
+    path: ${path.config}/modules.d/*.yml
+    reload.enabled: false
+
+# filebeat.autodiscover:
+#   providers:
+#     - type: docker
+#       hints.enabled: true
+
+filebeat.inputs:
+- type: docker
+  combine_partial: true
+  #multiline.pattern: '^\[[0-9]{4}-[0-9]{2}-[0-9]{2}'
+  multiline.pattern: "^[[:space:]]+(at|\\.{3})\\b|^Caused by:"
+  multiline.negate: false
+  #multiline.negate: true
+  multiline.match: after
+  containers:
+    path: "/var/lib/docker/containers"
+    stream: "all"
+    ids:
+      - "*"
+
+processors:
+- add_docker_metadata: ~
+    #host: "unix:///var/run/docker.sock"
+
+output.elasticsearch:
+  hosts: '${ELASTICSEARCH_HOSTS:mong0-db:9200}'
+  username: 'elastic'
+  password: 'changeme'
+
+logging.json: true
+logging.metrics.enabled: false

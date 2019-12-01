@@ -1,0 +1,71 @@
+---
+- name: Install ELK to mongo-db host
+  gather_facts: yes
+  hosts: mongo-db
+  become: yes 
+
+  tasks:
+
+    - name: Change system parameters for kibana
+      sysctl:
+        name: vm.max_map_count
+        value: '262144'
+        state: present  
+
+    - name: Create kibana container
+      docker_container:
+        name: kibana
+        image: kibana:6.8.4
+        networks:
+          - name: microservices-net
+        ports:
+          - "5601:5601"
+        recreate: yes
+        state: started
+        restart_policy: always 
+
+    - name: Create ElasticSearch container
+      docker_container:
+        name: elasticsearch
+        image: elasticsearch:6.8.4
+        networks:
+          - name: microservices-net
+        ports:
+          - "9200:9200"
+          - "9300:9300"
+        env: 
+          ES_JAVA_OPTS: "-Xms750m -Xmx750m"
+        recreate: yes
+        state: started
+        restart_policy: always         
+
+- name: Install filebeat
+  gather_facts: yes
+  hosts: docker
+  become: yes 
+
+  tasks:
+
+    - name: Copy filebeat config 
+      copy:
+        src: ./filebeat.yml
+        dest: /tmp
+        force: yes
+
+    - name: Create filebeat container
+      docker_container:
+        name: filebeat
+        image: docker.io/elastic/filebeat:6.8.4
+        networks:
+          - name: microservices-net
+        command: ["sh","-c","filebeat -e -strict.perms=false"]
+        volumes:
+          - /tmp/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+          - /var/lib/docker/containers:/var/lib/docker/containers:ro
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+        env: 
+          output.elasticsearch.hosts: "elasticsearch:9200"
+        user: root
+        recreate: yes
+        state: started
+        restart_policy: always       

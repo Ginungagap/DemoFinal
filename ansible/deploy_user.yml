@@ -1,0 +1,30 @@
+---
+- name: Pull and run user containers 
+  gather_facts: No
+  hosts: production
+
+  tasks:
+    - name: Create user container
+      docker_container:
+        name: user
+        image: gcr.io/project-for-terraform/user
+        networks:
+          - name: microservices-net
+        recreate: yes
+        state: started  
+        restart_policy: always     
+
+- name: Pull and run user-db containers 
+  gather_facts: No
+  hosts: mongo-db
+
+  tasks:
+    - name: Create user-db container
+      docker_container:
+        name: user-db
+        image: gcr.io/project-for-terraform/user-db
+        networks:
+          - name: microservices-net
+        recreate: yes
+        state: started  
+        restart_policy: always     

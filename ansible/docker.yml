@@ -1,0 +1,83 @@
+---
+- name: Install Docker
+  gather_facts: yes
+  hosts: docker
+  become: yes 
+ 
+  tasks:
+    - name: Install yum utils
+      yum:
+        name: yum-utils
+        state: latest
+ 
+    - name: Install device-mapper-persistent-data
+      yum:
+        name: device-mapper-persistent-data
+        state: latest
+ 
+    - name: Install lvm2
+      yum:
+        name: lvm2
+        state: latest
+ 
+    - name: Add Docker repo
+      get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+        mode: 0644
+       
+    - name: Install Docker
+      package:
+        name: docker-ce
+        state: latest
+
+    - name: Install pip
+      easy_install:
+        name: pip
+        state: latest
+
+    - name:  Install Docker-py
+      pip:
+        name: docker-py
+        state: latest
+      
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add user jenkins to docker group
+      user:
+        name: jenkins
+        groups: docker
+        append: yes
+
+- name: Create swarm
+  gather_facts: no
+  hosts: production
+  become: yes 
+
+  tasks:
+    - name: Initialize Docker swarm
+      shell: >
+        docker swarm init
+        --advertise-addr={{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:2377
+      run_once: true
+
+    - name: Get the manager join-token
+      shell: docker swarm join-token --quiet manager 
+      register: manager_token  
+
+    - name: Create overlay network 
+      shell: sudo docker network create --driver=overlay --attachable microservices-net
+
+- name: Connect to swarm
+  gather_facts: no
+  hosts: mongo-db
+  become: yes      
+
+  tasks:
+    - name: Add manager to the Swarm
+      shell: "docker swarm join --token {{ hostvars['production']['manager_token']['stdout'] }} {{ hostvars['production']['ansible_default_ipv4']['address'] }}:2377"
+     
