@@ -14,11 +14,6 @@ kind: Service
 apiVersion: v1
 metadata:
   name: front-end
-#   namespace: default
-#   selfLink: /api/v1/namespaces/default/services/my-service
-#   uid: 4b61125f-16be-11ea-950f-42010a80005a
-#   resourceVersion: '560688'
-#   creationTimestamp: '2019-12-04T17:48:35Z'
   labels:
     app: front-end
 spec:
@@ -26,14 +21,9 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 8079
-    #   nodePort: 30351
   selector:
     name: front-end
-#   clusterIP: 10.12.3.15
   type: LoadBalancer
   sessionAffinity: None
   externalTrafficPolicy: Cluster
-# status:
-#   loadBalancer:
-#     ingress:
-#       - ip: 34.68.75.230
+
